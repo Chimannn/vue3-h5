@@ -1,6 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, reactive, toRefs } from 'vue'
 import { InitData, initDataFunc } from "../pageJS/index";
+import List from "./List.vue";
+import ScrollDom from "./ScrollCom.vue";
 
 const data = reactive( new InitData() )
 
@@ -8,7 +10,7 @@ onMounted(()=>{
     initDataFunc(data)
 })
 
-const { chinaTotal, gdData, mapType } = toRefs(data)
+const { chinaTotal, gdData, mapType, china, areaTree, showList, isScroll } = toRefs(data)
 
 const tabChange = (type: number) => {
     data.type = type
@@ -18,6 +20,24 @@ const mapTypeChange = (type: number) => {
     data.mapType = type
 }
 
+let page:number = 0
+
+const getList = ()=>{
+    if(page === data.areaTree.length - 1){
+        data.isScroll = false
+        return;
+    };
+    page++
+    data.showList.push(...data.areaTree[page])
+}
+
+const refreshFun= (fallback:Function)=>{
+    initDataFunc(data).then(()=>{
+        page = 0
+        data.isScroll = true
+        fallback()
+    })
+}
 </script>
 
 <template>
@@ -126,6 +146,20 @@ const mapTypeChange = (type: number) => {
                 累计确诊
                 </div>
             </div>
+        </div>
+        <div class="data-list content">
+            <h3>中国病例</h3>
+            <List :showChildren="true" :list="china" v-if="china.length > 0" />
+        </div>
+        <div v-if="areaTree.length > 0" class="data-list content">
+            <h3>世界病例</h3>
+            <ScrollDom 
+                :distance="100" 
+                :isScroll:Boolean="isScroll" 
+                @getList="getList"  
+                @refreshFun="refreshFun">
+                    <List :showChildren="false" :list="showList"/>
+            </ScrollDom>
         </div>
     </div>
 </template>

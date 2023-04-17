@@ -14,6 +14,7 @@ class InitData implements IData{
         today: Object,
         total: Object
     }
+    showList: any[] = []
     china: any[] = []
     gdData: IGDData = {
         extData: Object,
@@ -25,9 +26,18 @@ class InitData implements IData{
     lastUpdateTime: string = ""
     name: string = ""
     type: number = 1
+    isScroll: Boolean = true
 }
 
-const initDataFunc = (data: InitData)=>{
+const getPageList = (list:any[]) => {
+    const arr:Array<any[]>[] = []
+    for (let index = 0; index < list.length; index+=30) {
+        arr.push(list.slice(index,index+30))        
+    }
+    return arr
+}
+
+const initDataFunc = async (data: InitData)=>{
     let mapDom: HTMLElement | null = document.getElementById("map")
     let mapDom2: HTMLElement | null = document.getElementById("map2")
     let optionMap: EChartsOption = {
@@ -70,46 +80,47 @@ const initDataFunc = (data: InitData)=>{
     echarts.registerMap("china", (chinaJson as any))
     myMap.showLoading()
 
-    axios("/api/ug/api/wuhan/app/data/list-total").then((res)=>{
-        if(res.data.code && res.data.code == 10000){
-            data.areaTree = res.data.data.areaTree
-            data.chinaDayList = res.data.data.chinaDayList
-            data.chinaTotal = res.data.data.chinaTotal
-            data.china = data.areaTree.find((item: { id: string; }) => item.id === "0").children
-            data.gdData = data.china.find((item: { id: string;}) => item.id === "440000")        
+    let res = await axios("/api/ug/api/wuhan/app/data/list-total")
+    if(res.data.code && res.data.code == 10000){
+        // data.areaTree = res.data.data.areaTree
+        data.areaTree = getPageList(res.data.data.areaTree)
+        data.showList = data.areaTree[0]
+        data.chinaDayList = res.data.data.chinaDayList
+        data.chinaTotal = res.data.data.chinaTotal
+        data.china = res.data.data.areaTree.find((item: { id: string; }) => item.id === "0").children
+        data.gdData = data.china.find((item: { id: string;}) => item.id === "440000")        
 
-            let mapData: any[] = []
-            let mapData2: any[] = []
-            
-            data.china.map( (v: any) => {
-                mapData.push({
-                    name: v.name,
-                    value: v.total.confirm - v.total.dead - v.total.heal || 0
-                })
-                mapData2.push({
-                    name: v.name,
-                    value: v.total.confirm || 0
-                })
+        let mapData: any[] = []
+        let mapData2: any[] = []
+        
+        data.china.map( (v: any) => {
+            mapData.push({
+                name: v.name,
+                value: v.total.confirm - v.total.dead - v.total.heal || 0
             })
-            myMap.hideLoading()
-            myMap.setOption({
-                ...optionMap,
-                series: {
-                    ...series,
-                    data: mapData,
+            mapData2.push({
+                name: v.name,
+                value: v.total.confirm || 0
+            })
+        })
+        myMap.hideLoading()
+        myMap.setOption({
+            ...optionMap,
+            series: {
+                ...series,
+                data: mapData,
 
-                }
-            })
-            myMap2.setOption({
-                ...optionMap,
-                series: {
-                    ...series,
-                    data: mapData2,
+            }
+        })
+        myMap2.setOption({
+            ...optionMap,
+            series: {
+                ...series,
+                data: mapData2,
 
-                }
-            })
-        }
-    })
+            }
+        })
+    }
 }
 
 export {

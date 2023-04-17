@@ -1,6 +1,7 @@
 interface IData {
     areaTree: any[],
     chinaDayList: any[],
+    showList: any[],
     chinaTotal: {},
     china: any[],
     gdData: object,
@@ -8,6 +9,7 @@ interface IData {
     mapType: number,
     lineType: number,
     lastUpdateTime: string,
+    isScroll: Boolean,
 }
 
 interface IAreaTree {
@@ -26,8 +28,31 @@ interface IGDData {
     total: any
 }
 
+
+//List组件
+interface IChina{
+    children: [],
+    id: string,
+    name: string,
+    total: {
+        confirm: number,
+        dead: number,
+        heal: number,
+        input: number,
+        severe: number,
+        suspect: number
+    },
+    today: {
+        confirm: number,
+        dead: number,
+        heal: number,
+        storeConfirm: number
+    }
+}
+
 export type{
     IData,
     IChinaTotal,
-    IGDData
+    IGDData,
+    IChina
 }
